@@ -1,0 +1,527 @@
+{
+  "name": "AI Ops - Order Intelligence System (Google Drive)",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 8
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "2",
+      "name": "Search Orders File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [520, 200],
+      "parameters": {
+        "operation": "search",
+        "search": {
+          "query": "name='orders.csv' and mimeType='text/csv' and 'AI-Ops-Data' in parents"
+        }
+      },
+      "credentials": { "googleDriveOAuth2Api": { "id": "", "name": "Google Drive OAuth" } }
+    },
+
+    {
+      "id": "3",
+      "name": "Download Orders CSV",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [820, 200],
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{$json[\"id\"]}}"
+      },
+      "credentials": { "googleDriveOAuth2Api": { "id": "", "name": "Google Drive OAuth" } }
+    },
+
+    {
+      "id": "4",
+      "name": "Convert Orders CSV",
+      "type": "n8n-nodes-base.binaryToJson",
+      "typeVersion": 1,
+      "position": [1100, 200],
+      "parameters": {
+        "options": { "headerRow": true }
+      }
+    },
+    {
+      "id": "5",
+      "name": "Search Inventory File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [520, 480],
+      "parameters": {
+        "operation": "search",
+        "search": {
+          "query": "name='inventory.csv' and mimeType='text/csv' and 'AI-Ops-Data' in parents"
+        }
+      },
+      "credentials": { "googleDriveOAuth2Api": { "id": "", "name": "Google Drive OAuth" } }
+    },
+
+    {
+      "id": "6",
+      "name": "Download Inventory CSV",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 2,
+      "position": [820, 480],
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{$json[\"id\"]}}"
+      },
+      "credentials": { "googleDriveOAuth2Api": { "id": "", "name": "Google Drive OAuth" } }
+    },
+
+    {
+      "id": "7",
+      "name": "Convert Inventory CSV",
+      "type": "n8n-nodes-base.binaryToJson",
+      "typeVersion": 1,
+      "position": [1100, 480],
+      "parameters": {
+        "options": { "headerRow": true }
+      }
+    },
+
+    {
+      "id": "8",
+      "name": "Merge Orders + Inventory",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1400, 340],
+      "parameters": {
+        "mode": "multiplex"
+      }
+    },
+
+    {
+      "id": "9",
+      "name": "Split Order Loop",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [1680, 340],
+      "parameters": {
+        "batchSize": 1
+      }
+    },
+
+    {
+      "id": "10",
+      "name": "Match Inventory for Order",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1940, 200],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"ProductCode\"]}}",
+              "operation": "equal",
+              "value2": "={{$items(\"Convert Inventory CSV\")[0].json[\"ProductCode\"]}}"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "11",
+      "name": "Check Stock Shortage",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2200, 80],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"Quantity\"]}}",
+              "operation": "larger",
+              "value2": "={{$items(\"Convert Inventory CSV\")[0].json[\"AvailableStock\"]}}"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "12",
+      "name": "Set Escalate - Stock",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2460, -20],
+      "parameters": {
+        "fields": {
+          "string": [
+            { "name": "Decision", "value": "Escalate" },
+            { "name": "Reason", "value": "Stock shortage" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "13",
+      "name": "Check Capacity OK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2200, 240],
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"Quantity\"] + $json[\"capacity_used\"]}}",
+              "operation": "smallerEqual",
+              "value2": "={{200}}"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "14",
+      "name": "Set Approve",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2460, 180],
+      "parameters": {
+        "fields": {
+          "string": [
+            { "name": "Decision", "value": "Approve" },
+            { "name": "Reason", "value": "Inventory & capacity OK" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "15",
+      "name": "Check Urgent For Split",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2200, 400],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"Priority\"]}}",
+              "operation": "equal",
+              "value2": "Urgent"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "16",
+      "name": "Set Split Decision",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2460, 340],
+      "parameters": {
+        "fields": {
+          "string": [
+            { "name": "Decision", "value": "Split" },
+            { "name": "Reason", "value": "Urgent but only partial capacity available" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "17",
+      "name": "Check Normal → Delay",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [2200, 560],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"Priority\"]}}",
+              "operation": "equal",
+              "value2": "Normal"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "18",
+      "name": "Set Delay Decision",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2460, 520],
+      "parameters": {
+        "fields": {
+          "string": [
+            { "name": "Decision", "value": "Delay" },
+            { "name": "Reason", "value": "Capacity full" }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "19",
+      "name": "Set Escalate - Urgent Capacity",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [2460, 660],
+      "parameters": {
+        "fields": {
+          "string": [
+            { "name": "Decision", "value": "Escalate" },
+            { "name": "Reason", "value": "Urgent but no capacity available" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "20",
+      "name": "Collect Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [2760, 300],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+
+    {
+      "id": "21",
+      "name": "Prepare Email Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [3040, 300],
+      "parameters": {
+        "fields": {
+          "string": [
+            {
+              "name": "body",
+              "value": "={{ $items().map(i => i.json.OrderID + ' → ' + i.json.Decision + ' (' + i.json.Reason + ')').join('\\n') }}"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": "22",
+      "name": "Send Email Summary",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [3320, 300],
+      "parameters": {
+        "fromEmail": "",
+        "toEmail": "",
+        "subject": "Daily Order Intelligence Summary",
+        "text": "={{$json[\"body\"]}}"
+      },
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "Gmail OAuth"
+        }
+      }
+    }
+  ],
+
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          { "node": "Search Orders File", "type": "main", "index": 0 },
+          { "node": "Search Inventory File", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Search Orders File": {
+      "main": [
+        [
+          { "node": "Download Orders CSV", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Download Orders CSV": {
+      "main": [
+        [
+          { "node": "Convert Orders CSV", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Convert Orders CSV": {
+      "main": [
+        [
+          { "node": "Merge Orders + Inventory", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Search Inventory File": {
+      "main": [
+        [
+          { "node": "Download Inventory CSV", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Download Inventory CSV": {
+      "main": [
+        [
+          { "node": "Convert Inventory CSV", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Convert Inventory CSV": {
+      "main": [
+        [
+          { "node": "Merge Orders + Inventory", "type": "main", "index": 1 }
+        ]
+      ]
+    },
+
+    "Merge Orders + Inventory": {
+      "main": [
+        [
+          { "node": "Split Order Loop", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Split Order Loop": {
+      "main": [
+        [
+          { "node": "Match Inventory for Order", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Match Inventory for Order": {
+      "main": [
+        [
+          { "node": "Check Stock Shortage", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Check Stock Shortage": {
+      "main": [
+        [
+          { "node": "Check Capacity OK", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Set Escalate - Stock", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Set Escalate - Stock": {
+      "main": [
+        [
+          { "node": "Collect Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Check Capacity OK": {
+      "main": [
+        [
+          { "node": "Set Approve", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Check Urgent For Split", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Set Approve": {
+      "main": [
+        [
+          { "node": "Collect Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Check Urgent For Split": {
+      "main": [
+        [
+          { "node": "Set Split Decision", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Check Normal → Delay", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Set Split Decision": {
+      "main": [
+        [
+          { "node": "Collect Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Check Normal → Delay": {
+      "main": [
+        [
+          { "node": "Set Delay Decision", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Set Escalate - Urgent Capacity", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Set Delay Decision": {
+      "main": [
+        [
+          { "node": "Collect Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Set Escalate - Urgent Capacity": {
+      "main": [
+        [
+          { "node": "Collect Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Collect Results": {
+      "main": [
+        [
+          { "node": "Prepare Email Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+
+    "Prepare Email Summary": {
+      "main": [
+        [
+          { "node": "Send Email Summary", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  }
+}

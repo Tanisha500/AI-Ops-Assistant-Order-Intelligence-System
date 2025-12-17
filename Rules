@@ -1,0 +1,19 @@
+Rules
+
+RULE 1:
+If inventory is missing or AvailableStock <= 0, escalate order.
+
+RULE 2:
+If Quantity > AvailableStock, escalate due to stock shortage.
+
+RULE 3:
+If Quantity <= 200, approve order.
+
+RULE 4:
+If Quantity > 200 AND Priority = Urgent, split order.
+
+RULE 5:
+If Quantity > 200 AND Priority = Normal, delay order.
+
+RULE 6:
+Each order must exit with exactly one decision.

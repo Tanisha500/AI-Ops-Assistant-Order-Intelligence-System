@@ -25,22 +25,43 @@ Files are read from Google Drive.
 
 # Decision Logic (Core Workflow Behavior)
 
-Orders and inventory are read and merged on ProductCode to enrich each order with available stock.
+1. Orders and inventory are read and merged on ProductCode to enrich each order with available stock.
 
-Each order is evaluated independently using conditional decision logic.
+2. Each order is evaluated independently using conditional decision logic.
 
-If inventory is missing or zero, the order is immediately escalated.
+3. If inventory is missing or zero, the order is immediately escalated.
 
-If order quantity exceeds available stock, the order is escalated for stock shortage.
+4. If order quantity exceeds available stock, the order is escalated for stock shortage.
 
-If stock is sufficient, the order is checked against a fixed daily capacity threshold (200 units).
+5. If stock is sufficient, the order is checked against a fixed daily capacity threshold (200 units).
 
-Orders within capacity are approved automatically.
+6. Orders within capacity are approved automatically.
 
-Orders exceeding capacity are routed based on priority: urgent orders are split, normal orders are delayed.
+7. Orders exceeding capacity are routed based on priority: urgent orders are split, normal orders are delayed.
 
-Each order exits the workflow with exactly one decision, reason, and action.
+8. Each order exits the workflow with exactly one decision, reason, and action.
 
-All decision outputs are aggregated into a single result set before notification.
+9. All decision outputs are aggregated into a single result set before notification.
 
-The workflow is deterministic and executes the same logic for every run.
+10. The workflow is deterministic and executes the same logic for every run.
+
+# Failure Handling
+
+- Missing or invalid inventory data routes orders to escalation paths.
+
+- Type conversion is enforced to prevent numeric comparison errors.
+
+- Each execution is deterministic and idempotent.
+
+# Assumptions
+
+- Input CSV files are well-formed and available at execution time.
+
+- Product codes are consistent across datasets.
+
+- Production capacity threshold is fixed at 200 units per run.
+
+- Priority values are predefined (Urgent, Normal).
+
+# Video
+

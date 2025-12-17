@@ -1,0 +1,8 @@
+﻿OrderID,ProductCode,Quantity,OrderDate,Priority,AvailableStock,Decision,Reason,Action
+ORD003,K1010,300,1/3/2025,Normal,250,ESCALATE_STOCK,Insufficient stock available,Notify procurement / inventory team
+ORD005,K1022,150,1/4/2025,Normal,100,ESCALATE_STOCK,Insufficient stock available,Notify procurement / inventory team
+ORD006,K1005,200,1/4/2025,Normal,180,ESCALATE_STOCK,Insufficient stock available,Notify procurement / inventory team
+ORD002,K1005,80,1/2/2025,Urgent,180,SPLIT_ORDER,Urgent order exceeds optimal capacity,Split order into multiple shipments
+ORD004,K1001,60,1/3/2025,Urgent,140,SPLIT_ORDER,Urgent order exceeds optimal capacity,Split order into multiple shipments
+ORD007,K1010,90,1/4/2025,Urgent,250,SPLIT_ORDER,Urgent order exceeds optimal capacity,Split order into multiple shipments
+ORD001,K1001,120,1/2/2025,Normal,140,DELAY,Normal priority – deferred processing,Schedule for later fulfillment

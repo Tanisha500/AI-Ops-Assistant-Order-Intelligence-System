@@ -1,0 +1,911 @@
+{
+  "name": "AI Ops Order-Intelligence System",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        }
+      },
+      "id": "40bd83f1-5043-4787-800a-3835472a3849",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -2720,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "orders.csv",
+        "limit": 5,
+        "filter": {
+          "driveId": {
+            "__rl": true,
+            "value": "My Drive",
+            "mode": "list",
+            "cachedResultName": "My Drive",
+            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2416,
+        64
+      ],
+      "id": "0d85540a-4ea8-4eba-8890-8050766791c5",
+      "name": "Search Orders File",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iW6gPwSFEshvxTyN",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "inventory.csv",
+        "limit": 5,
+        "filter": {
+          "driveId": {
+            "mode": "list",
+            "value": "My Drive"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2416,
+        368
+      ],
+      "id": "383714c4-6fd1-470a-aa8f-7088003955b4",
+      "name": "Search Inventory File",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iW6gPwSFEshvxTyN",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "1ilCd1vkBimWnHaAE62OkFwpvsXeym5bx",
+          "mode": "list",
+          "cachedResultName": "orders.csv",
+          "cachedResultUrl": "https://drive.google.com/file/d/1ilCd1vkBimWnHaAE62OkFwpvsXeym5bx/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2144,
+        64
+      ],
+      "id": "a3f7f5b1-2741-4d43-8c96-fb0d9c792ebf",
+      "name": "Download Orders CSV",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iW6gPwSFEshvxTyN",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "10xW5xRhA-xi-bqaO_OVUlRYXzucK6sHe",
+          "mode": "list",
+          "cachedResultName": "inventory.csv",
+          "cachedResultUrl": "https://drive.google.com/file/d/10xW5xRhA-xi-bqaO_OVUlRYXzucK6sHe/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2144,
+        368
+      ],
+      "id": "194566cd-9315-494b-9dfa-0619f48385ff",
+      "name": "Download Inventory CSV",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iW6gPwSFEshvxTyN",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        64
+      ],
+      "id": "d8f6a4c5-e58a-448a-a15c-3c2f16761a90",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1888,
+        368
+      ],
+      "id": "ff5f8274-9c30-4ed9-9f4f-ab7b4645ba4c",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "ProductCode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1504,
+        224
+      ],
+      "id": "d24bfb03-529c-414b-b084-047893298470",
+      "name": "Merge Orders + Inventory"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0e9e74fa-4312-4b79-99b4-065af2483db2",
+              "leftValue": "={{ $json.AvailableStock }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1216,
+        224
+      ],
+      "id": "8383d7ae-e184-4a36-9b05-eedf27c6f45d",
+      "name": "Match Inventory for Order"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "16a51435-9ca4-40b6-bb83-9b6dd2a217f4",
+              "leftValue": "={{ $json.Quantity }}",
+              "rightValue": "={{ $json.AvailableStock }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        -48
+      ],
+      "id": "41c2f80f-0171-4acc-ad1a-54785af2a452",
+      "name": "Check Stock Shortage"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c3109cdd-4793-4497-90cf-c869ef0fb986",
+              "leftValue": "={{ $json.Quantity }}",
+              "rightValue": "200",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        128
+      ],
+      "id": "b2e42e65-bd7b-402c-90a9-77f1c5c62735",
+      "name": "Check Capacity OK"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "75d1f220-5663-4ce9-b377-f1a307f60cfb",
+              "leftValue": "={{ $json.Priority }}",
+              "rightValue": "Urgent",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        304
+      ],
+      "id": "292da63d-db22-49f3-9efa-e6c232224b8c",
+      "name": "Check Urgent For Split"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dffd7aa2-2ff9-42f1-8671-d179cac0b4ca",
+              "leftValue": "={{ $json.Priority }}",
+              "rightValue": "Normal",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -752,
+        480
+      ],
+      "id": "8f396311-995c-437d-8e85-fc5e4ee7b53a",
+      "name": "Check Normal → Delay"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da24919a-936b-4b1b-8033-26f263658c60",
+              "name": "Decision",
+              "value": "ESCALATE_STOCK",
+              "type": "string"
+            },
+            {
+              "id": "e27890de-b64a-4955-b3e8-5ac978b25868",
+              "name": "Reason",
+              "value": "Insufficient stock available",
+              "type": "string"
+            },
+            {
+              "id": "f6173af2-df98-40b5-9e2d-68eb7d863586",
+              "name": "Action",
+              "value": "Notify procurement / inventory team",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        -144
+      ],
+      "id": "cfc894ec-5c3f-47ac-ab1a-772ec4cb9a13",
+      "name": "Set Escalate - Stock"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1b07b72-7c15-4864-9861-cc64648298bf",
+              "name": "Decision",
+              "value": "APPROVED",
+              "type": "string"
+            },
+            {
+              "id": "506cece4-556f-48a0-b339-e9aded2a3730",
+              "name": "Reason",
+              "value": "Stock and capacity available",
+              "type": "string"
+            },
+            {
+              "id": "2984362a-0817-4de2-8977-9e21a3b4db8e",
+              "name": "Action",
+              "value": "Proceed with order fulfillment",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        64
+      ],
+      "id": "16b914c2-eb96-4aee-93a6-393f22a1d973",
+      "name": "Set Approve"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d50da9c-12c5-4c66-9370-bbf5a9a3e2b4",
+              "name": "Decision",
+              "value": "SPLIT_ORDER",
+              "type": "string"
+            },
+            {
+              "id": "6d0dfc3d-33d5-4076-876a-8fda1009d2a9",
+              "name": "Reason",
+              "value": "Urgent order exceeds optimal capacity",
+              "type": "string"
+            },
+            {
+              "id": "94b30d8a-c27f-4c3c-995a-9ac7d5bc6f2b",
+              "name": "Action",
+              "value": "Split order into multiple shipments",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        240
+      ],
+      "id": "2e6988d9-f070-48e9-9d65-1abe0e494af5",
+      "name": "Set Split Decision"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bc59c587-8e9a-45cc-b1e8-a17d27a5f2ee",
+              "name": "Decision",
+              "value": "DELAY",
+              "type": "string"
+            },
+            {
+              "id": "961b4086-ae15-4607-981f-b04ef9d05205",
+              "name": "Reason",
+              "value": "Normal priority – deferred processing",
+              "type": "string"
+            },
+            {
+              "id": "ca91cb8a-18a5-42fe-8fe6-e4abe499b6a5",
+              "name": "Action",
+              "value": "Schedule for later fulfillment",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        416
+      ],
+      "id": "edf531ad-e201-4878-8625-c5f007f295c3",
+      "name": "Set Delay Decision"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9051867-d801-4d67-9472-1b7550ff3c2f",
+              "name": "Decision",
+              "value": "ESCALATE_URGENT_CAPACITY",
+              "type": "string"
+            },
+            {
+              "id": "919c697a-02e7-4b6c-b935-f83b8e39b267",
+              "name": "Reason",
+              "value": "Urgent order but capacity exceeded",
+              "type": "string"
+            },
+            {
+              "id": "3ea01640-bbef-437c-a3a6-14aedc338d38",
+              "name": "Action",
+              "value": "Immediate management escalation",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        608
+      ],
+      "id": "af7dbd95-2251-49d5-bc7d-4211ea38536e",
+      "name": "Set Escalate - Urgent Capacity"
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -160,
+        128
+      ],
+      "id": "018075ad-50a8-4144-a0c3-b34a6ee8d5c4",
+      "name": "Collect Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst groups = {\n  ESCALATE_STOCK: [],\n  SPLIT_ORDER: [],\n  DELAY: []\n};\n\n// Group items\nitems.forEach(item => {\n  const d = item.json.Decision;\n  if (groups[d]) groups[d].push(item.json);\n});\n\nlet emailBody = `\n<h2>Order Processing Decision Summary</h2>\n<hr>\n`;\n\n// ESCALATE – STOCK\nif (groups.ESCALATE_STOCK.length) {\n  emailBody += `<h3>Stock Issues</h3><ul>`;\n  groups.ESCALATE_STOCK.forEach(o => {\n    emailBody += `\n      <li>\n        <b>OrderID:</b> ${o.OrderID}<br>\n        <b>Product:</b> ${o.ProductCode}<br>\n        <b>Quantity:</b> ${o.Quantity}<br>\n        <b>Available Stock:</b> ${o.AvailableStock}<br>\n        <b>Action:</b> ${o.Action}\n      </li><br>\n    `;\n  });\n  emailBody += `</ul>`;\n}\n\n// SPLIT – URGENT\nif (groups.SPLIT_ORDER.length) {\n  emailBody += `<h3>Split Orders</h3><ul>`;\n  groups.SPLIT_ORDER.forEach(o => {\n    emailBody += `\n      <li>\n        <b>OrderID:</b> ${o.OrderID}<br>\n        <b>Product:</b> ${o.ProductCode}<br>\n        <b>Quantity:</b> ${o.Quantity}<br>\n        <b>Action:</b> ${o.Action}\n      </li><br>\n    `;\n  });\n  emailBody += `</ul>`;\n}\n\n// DELAY – NORMAL\nif (groups.DELAY.length) {\n  emailBody += `<h3>Delayed Orders</h3><ul>`;\n  groups.DELAY.forEach(o => {\n    emailBody += `\n      <li>\n        <b>OrderID:</b> ${o.OrderID}<br>\n        <b>Product:</b> ${o.ProductCode}<br>\n        <b>Quantity:</b> ${o.Quantity}<br>\n        <b>Action:</b> ${o.Action}\n      </li><br>\n    `;\n  });\n  emailBody += `</ul>`;\n}\n\nreturn [\n  {\n    json: {\n      subject: \"Order Processing Decision Summary\",\n      body: emailBody\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        176
+      ],
+      "id": "9a1bec2e-bf23-441e-aa45-9d29afa3bec7",
+      "name": "Prepare Email Summary"
+    },
+    {
+      "parameters": {
+        "sendTo": "tanishasolanki500@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        176
+      ],
+      "id": "8c90eca9-5801-4fac-97a4-177808976a7a",
+      "name": "Send a message",
+      "webhookId": "29fdc7b7-b836-4681-b6e6-7c0bc51d9602",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UcQsPqzEuhfdLTlR",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        464
+      ],
+      "id": "09e86639-b823-4c07-89ff-61b9cafd1061",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 1. Define customer note paraphrases (for demo / evaluation)\nconst noteVariants = [\n  \"Please ship this urgently, partial delivery is fine\",\n  \"I need this as soon as possible, you can split the order\",\n  \"Urgent requirement, send whatever is available now\"\n];\n\n// 2. Simple intent detection using semantic keyword grouping\nfunction detectIntent(notes) {\n  const text = notes.join(\" \").toLowerCase();\n\n  const hasUrgency =\n    text.includes(\"urgent\") ||\n    text.includes(\"as soon as possible\") ||\n    text.includes(\"immediately\");\n\n  const allowsPartial =\n    text.includes(\"partial\") ||\n    text.includes(\"split\") ||\n    text.includes(\"whatever is available\");\n\n  if (hasUrgency && allowsPartial) {\n    return \"URGENT_FLEXIBLE_DELIVERY\";\n  }\n\n  return \"STANDARD_REQUEST\";\n}\n\n// 3. Detect intent\nconst detectedIntent = detectIntent(noteVariants);\n\n// 4. Start with original system decision (IMPORTANT)\nlet finalDecision = $json.Decision;\nconst rejectedAlternatives = [];\n\n// 5. Decision reasoning logic (RESTRAINT-BASED)\nif (detectedIntent === \"URGENT_FLEXIBLE_DELIVERY\") {\n\n  if (\n    $json.Decision === \"ESCALATE_STOCK\" &&\n    Number($json.AvailableStock) > 0\n  ) {\n    finalDecision = \"SPLIT_ORDER\";\n    rejectedAlternatives.push(\n      \"ESCALATE_STOCK (partial fulfillment possible)\"\n    );\n    rejectedAlternatives.push(\n      \"DELAY (conflicts with urgency)\"\n    );\n  }\n\n  else if ($json.Decision === \"SPLIT_ORDER\") {\n    finalDecision = \"SPLIT_ORDER\";\n    rejectedAlternatives.push(\n      \"DELAY (conflicts with urgency)\"\n    );\n    rejectedAlternatives.push(\n      \"ESCALATE_STOCK (inventory sufficient)\"\n    );\n  }\n\n  else if ($json.Decision === \"DELAY\") {\n    // IMPORTANT: Do NOT override delay automatically\n    finalDecision = \"DELAY\";\n    rejectedAlternatives.push(\n      \"SPLIT_ORDER (capacity not exceeded)\"\n    );\n    rejectedAlternatives.push(\n      \"ESCALATE_STOCK (no shortage)\"\n    );\n  }\n}\n\n// 6. Build explanation\nconst reasoningExplanation =\n  detectedIntent === \"URGENT_FLEXIBLE_DELIVERY\"\n    ? \"Paraphrased customer notes consistently indicate urgency with flexibility. System prioritizes speed while respecting inventory and capacity constraints.\"\n    : \"Customer intent does not conflict with operational rules. Original decision retained.\";\n\n// 7. Return enriched output\nreturn {\n  ...$json,\n  CustomerNoteVariants: noteVariants,\n  DetectedIntent: detectedIntent,\n  FinalDecision: finalDecision,\n  RejectedAlternatives: rejectedAlternatives,\n  ReasoningExplanation: reasoningExplanation\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -32
+      ],
+      "id": "9f102009-d0c2-47a0-bcb0-a95e4f50ca64",
+      "name": "Intent Normalization & Reasoning"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        -32
+      ],
+      "id": "9c7ae071-6198-4982-8fc3-8375378dff0d",
+      "name": "Convert to File1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search Orders File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search Inventory File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Orders File": {
+      "main": [
+        [
+          {
+            "node": "Download Orders CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Inventory File": {
+      "main": [
+        [
+          {
+            "node": "Download Inventory CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Orders CSV": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Inventory CSV": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge Orders + Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Merge Orders + Inventory",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Orders + Inventory": {
+      "main": [
+        [
+          {
+            "node": "Match Inventory for Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Inventory for Order": {
+      "main": [
+        [
+          {
+            "node": "Check Stock Shortage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Stock Shortage": {
+      "main": [
+        [
+          {
+            "node": "Set Escalate - Stock",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Capacity OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Capacity OK": {
+      "main": [
+        [
+          {
+            "node": "Set Approve",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Urgent For Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Urgent For Split": {
+      "main": [
+        [
+          {
+            "node": "Set Split Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Normal → Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Normal → Delay": {
+      "main": [
+        [
+          {
+            "node": "Set Delay Decision",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Escalate - Urgent Capacity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Escalate - Stock": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Approve": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set Split Decision": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Set Delay Decision": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Set Escalate - Urgent Capacity": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Intent Normalization & Reasoning",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Intent Normalization & Reasoning": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8624fdeb-6f4d-4479-9630-35fb508fef25",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8987e27ceac6e707d01e164a8cc3ada3f576bedd813b0506c1a66c37fc50dc45"
+  },
+  "id": "ajfSKyqRUNW2hQ8F",
+  "tags": []
+}

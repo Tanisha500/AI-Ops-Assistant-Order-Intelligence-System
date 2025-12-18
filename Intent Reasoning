@@ -1,0 +1,15 @@
+1. The system treats customer notes as signals of intent rather than fixed keywords.
+
+2. Multiple paraphrased inputs expressing urgency and delivery flexibility are grouped into a single intent category.
+
+3. Intent detection is separated from operational rules such as stock and capacity checks.
+
+4. The detected intent is used to validate or refine, not blindly override, the original operational decision.
+
+5. Decisions remain consistent across different phrasings of the same intent.
+
+6. For each decision, alternative actions are explicitly evaluated and rejected with clear reasons.
+
+7. Urgent intent prioritizes speed, while respecting inventory and capacity constraints.
+
+8. This approach ensures explainable, restrained, and repeatable decision-making under ambiguous inputs.
